@@ -2,8 +2,6 @@ services:
   vllm:
     image: vllm/vllm-openai:nightly-x86_64
     ipc: host
-    ports:
-      - "8000:8000"
     gpus: all
     environment:
       - HF_HOME=/root/.cache/huggingface

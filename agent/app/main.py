@@ -2,6 +2,8 @@
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 from app.utils.vllm_client import VLLMClient
+from app.guardrails.output_validator import validate_risk_assessment
+from app.guardrails.input_validator import validate_input_message
 import json
 import re
 
@@ -57,6 +59,9 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 def chat(request: ChatRequest):
     try:
+        # Apply input validation guardrail
+        validate_input_message(request.message)
+        
         raw_response = vllm_client.chat(request.message)
 
         # Extract first JSON object from model output
@@ -65,7 +70,13 @@ def chat(request: ChatRequest):
             raise ValueError("No valid JSON found in model output")
 
         parsed = json.loads(match.group(0))
-        return parsed
+        
+        # Apply output validation guardrail
+        validated = validate_risk_assessment(json.dumps(parsed))
+        
+        return validated
 
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

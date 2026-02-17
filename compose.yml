@@ -8,7 +8,7 @@ services:
     environment:
       - HF_HOME=/root/.cache/huggingface
     command:
-      - ${MODEL_NAME:-TinyLlama/TinyLlama-1.1B-Chat-v1.0}
+      - TinyLlama/TinyLlama-1.1B-Chat-v1.0
       - --host
       - 0.0.0.0
       - --port
@@ -23,10 +23,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - VLLM_BASE_URL=${VLLM_BASE_URL:-http://vllm:8000/v1}
-      - MODEL_NAME=${MODEL_NAME:-TinyLlama/TinyLlama-1.1B-Chat-v1.0}
-      - SYSTEM_PROMPT=${SYSTEM_PROMPT:-You are a helpful AI assistant.}
     depends_on:
       - vllm
     restart: unless-stopped

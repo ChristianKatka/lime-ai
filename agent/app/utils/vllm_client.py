@@ -1,5 +1,5 @@
 import requests
-from app.prompts import build_messages
+from app.utils.prompts.prompts import build_messages
 
 class VLLMClient:
     def __init__(self, base_url: str, model_name: str, system_prompt: str):

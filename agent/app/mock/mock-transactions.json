@@ -1,0 +1,72 @@
+[
+  {
+    "transaction_id": "TX-1001",
+    "timestamp": "2026-02-17T09:14:22Z",
+    "customer_id": "CUST-78421",
+    "customer_country": "Germany",
+    "amount_eur": 950000,
+    "currency": "EUR",
+    "destination_country": "Cayman Islands",
+    "destination_bank_type": "Offshore",
+    "payment_method": "Wire Transfer",
+    "description": "Investment transfer to holding structure.",
+    "is_new_beneficiary": true,
+    "customer_risk_profile": "Medium"
+  },
+  {
+    "transaction_id": "TX-1002",
+    "timestamp": "2026-02-17T10:02:11Z",
+    "customer_id": "CUST-11209",
+    "customer_country": "Finland",
+    "amount_eur": 480,
+    "currency": "EUR",
+    "destination_country": "Finland",
+    "destination_bank_type": "Retail",
+    "payment_method": "Card",
+    "description": "Electronics purchase.",
+    "is_new_beneficiary": false,
+    "customer_risk_profile": "Low"
+  },
+  {
+    "transaction_id": "TX-1003",
+    "timestamp": "2026-02-17T11:45:09Z",
+    "customer_id": "CUST-99832",
+    "customer_country": "France",
+    "amount_eur": 15000,
+    "currency": "EUR",
+    "destination_country": "United Arab Emirates",
+    "destination_bank_type": "Commercial",
+    "payment_method": "Wire Transfer",
+    "description": "Consulting services payment.",
+    "is_new_beneficiary": true,
+    "customer_risk_profile": "High"
+  },
+  {
+    "transaction_id": "TX-1004",
+    "timestamp": "2026-02-17T12:33:55Z",
+    "customer_id": "CUST-55478",
+    "customer_country": "Sweden",
+    "amount_eur": 72000,
+    "currency": "EUR",
+    "destination_country": "Russia",
+    "destination_bank_type": "Unknown",
+    "payment_method": "Wire Transfer",
+    "description": "Equipment purchase.",
+    "is_new_beneficiary": true,
+    "customer_risk_profile": "Medium"
+  },
+  {
+    "transaction_id": "TX-1005",
+    "timestamp": "2026-02-17T14:08:30Z",
+    "customer_id": "CUST-33107",
+    "customer_country": "Netherlands",
+    "amount_eur": 300000,
+    "currency": "EUR",
+    "destination_country": "United Kingdom",
+    "destination_bank_type": "Commercial",
+    "payment_method": "Wire Transfer",
+    "description": "Short-term liquidity movement between group entities.",
+    "is_new_beneficiary": false,
+    "customer_risk_profile": "Low"
+  }
+]

@@ -15,23 +15,19 @@ curl http://localhost:8000/v1/models
 
 Start Agent
 ```bash
-# If container already exists:
 
-docker start lime-agent
+# Start everything
+  docker compose up -d
 
-# If not, run:
-docker run -d --name lime-agent --network lime-ai_default -p 3000:3000 \
-  lime-agent
+# rebuild agent after code changes
+  docker compose up -d --build agent
 
-# stop and delete
-docker stop lime-agent
-docker rm lime-agent
 
 
 # CHAT lime ai call
 curl -X POST http://localhost:3000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"Say hello in one short sentence."}'
+  -d '{"message":"Analyze this transaction JSON and return the required risk JSON only:\n{\"transaction_id\":\"TX-1001\",\"timestamp\":\"2026-02-17T09:14:22Z\",\"customer_id\":\"CUST-78421\",\"customer_country\":\"Germany\",\"amount_eur\":950000,\"currency\":\"EUR\",\"destination_country\":\"Cayman Islands\",\"destination_bank_type\":\"Offshore\",\"payment_method\":\"Wire Transfer\",\"description\":\"Investment transfer to holding structure.\",\"is_new_beneficiary\":true,\"customer_risk_profile\":\"Medium\"}"}'
 
 
 
@@ -39,10 +35,11 @@ curl -X POST http://localhost:3000/chat \
 # Then try this outside of the ec2 instance. 8000 kutsuu suoraan vLLM eikä minun lime-ai
 curl http://13.62.34.37:8000/v1/models
 
-# Näytä env variable
-docker inspect lime-agent --format '{{range .Config.Env}}{{println .}}{{end}}' | grep SYSTEM_PROMPT
 
-[ec2-user@ip-172-31-35-89 lime-ai]$
+
+docker compose down
+docker compose logs
+
 ```
 
 

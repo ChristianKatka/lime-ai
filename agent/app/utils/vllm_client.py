@@ -1,20 +1,27 @@
 import requests
-from app.utils.prompts.prompts import build_messages
 
 class VLLMClient:
-    def __init__(self, base_url: str, model_name: str, system_prompt: str):
-        self.base_url = base_url.rstrip("/")
+    # Initialize client with vLLM server connection details
+    def __init__(self, model_name: str, system_prompt: str, temperature: float):
+        self.base_url = "http://vllm:8000/v1"
         self.model_name = model_name
         self.system_prompt = system_prompt
+        self.temperature = temperature
         self.timeout = 60
 
+    # Send a chat message to vLLM and return the model's response
     def chat(self, user_message: str) -> str:
+        # Endpoint: /chat/completions (OpenAI API standard)
         url = f"{self.base_url}/chat/completions"
-        messages = build_messages(self.system_prompt, user_message)
-        
+        messages = [
+                    {"role": "system", "content": self.system_prompt},
+                    {"role": "user", "content": user_message},
+                    ]    
+    
         payload = {
             "model": self.model_name,
-            "messages": messages
+            "messages": messages,
+            "temperature": self.temperature
         }
 
         response = requests.post(url, json=payload, timeout=self.timeout)

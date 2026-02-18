@@ -32,11 +32,6 @@ curl -X POST http://localhost:3000/chat \
 
 
 
-# Then try this outside of the ec2 instance. 8000 kutsuu suoraan vLLM eikä minun lime-ai
-curl http://13.62.34.37:8000/v1/models
-
-
-
 docker compose down
 docker compose logs
 

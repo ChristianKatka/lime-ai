@@ -10,7 +10,7 @@ import re
 app = FastAPI(title="Lime AI Agent")
 
 
-system_prompt = """You are LimeRisk, an enterprise transaction risk triage assistant.
+system_prompt = """You are Lime AI, an enterprise transaction risk triage assistant.
 
 You MUST follow these rules:
 - Use ONLY the information in the user's input. Do NOT invent or guess.

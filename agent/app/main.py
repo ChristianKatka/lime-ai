@@ -40,7 +40,7 @@ If you cannot comply with JSON-only output, output this exact JSON:
 {"summary":"", "risk_level":"LOW", "risk_score":0, "risk_categories":[], "red_flags":[], "missing_information":["Model failed to produce valid JSON output"], "recommended_actions":["Retry with lower temperature"], "confidence":"LOW"}"""
 
 vllm_client = VLLMClient(
-    model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    model_name="meta-llama/Llama-3.1-8B-Instruct",
     system_prompt=system_prompt,
     temperature=0.0
 )
@@ -63,16 +63,9 @@ def chat(request: ChatRequest):
         validate_input_message(request.message)
         
         raw_response = vllm_client.chat(request.message)
-
-        # Extract first JSON object from model output
-        match = re.search(r"\{.*\}", raw_response, re.DOTALL)
-        if not match:
-            raise ValueError("No valid JSON found in model output")
-
-        parsed = json.loads(match.group(0))
         
-        # Apply output validation guardrail
-        validated = validate_risk_assessment(json.dumps(parsed))
+        # Apply output validation guardrail (raw_response is already a JSON string)
+        validated = validate_risk_assessment(raw_response)
         
         return validated
 

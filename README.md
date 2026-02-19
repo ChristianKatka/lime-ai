@@ -26,6 +26,8 @@ Start Agent
   docker compose up -d --build agent
   docker image prune -f # delete old versions of the agent build. important to run once in a while
 
+# SHOW Agents logs:
+docker compose logs agent
 
 # CHAT lime ai call
 curl -X POST http://localhost:3000/chat \

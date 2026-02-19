@@ -4,8 +4,11 @@ from pydantic import BaseModel
 from app.utils.vllm_client import VLLMClient
 from app.guardrails.output_validator import validate_risk_assessment
 from app.guardrails.input_validator import validate_input_message
+from app.services.postgresql.db import put_risk_assessment_document_to_db
 import json
 import re
+import uuid
+from datetime import datetime, timezone
 
 app = FastAPI(title="Lime AI Agent")
 
@@ -66,6 +69,13 @@ def chat(request: ChatRequest):
         
         # Apply output validation guardrail (raw_response is already a JSON string)
         validated = validate_risk_assessment(raw_response)
+        
+        # Add ID + timestamp
+        validated["id"] = str(uuid.uuid4())
+        validated["time_stamp"] = datetime.now(timezone.utc).isoformat()
+        
+        # Log event to database
+        put_risk_assessment_document_to_db(validated)
         
         return validated
 

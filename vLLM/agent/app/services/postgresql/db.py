@@ -1,14 +1,14 @@
-import os
 from psycopg import connect
+from app.constants.index import POSTGRES_DB_URL, POSTGRES_DB_USERNAME, POSTGRES_DB_PASSWORD
 import json
 
 def get_conn():
     return connect(
-        host="christian-lime-ai-postgredb.cvkj09hn6us5.eu-north-1.rds.amazonaws.com",
+        host=POSTGRES_DB_URL,
         port=5432,
         dbname="postgres",
-        user="lime_agent",
-        password=os.environ["DB_PASSWORD"],
+        user=POSTGRES_DB_USERNAME,
+        password=POSTGRES_DB_PASSWORD,
         sslmode="require",
     )
 

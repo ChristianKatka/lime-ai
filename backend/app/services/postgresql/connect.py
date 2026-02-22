@@ -1,12 +1,13 @@
 from psycopg import connect
+from app.constants.index import POSTGRES_DB_URL, POSTGRES_DB_USERNAME, POSTGRES_DB_PASSWORD
 import os
 
 def get_conn():
     return connect(
-        host=os.environ["POSTGRES_DB_URL"],
+        host=POSTGRES_DB_URL
         port=5432,
         dbname="postgres",
-        user=os.environ["DB_USERNAME"],
-        password=os.environ["DB_PASSWORD"],
+        user=POSTGRES_DB_USERNAME
+        password=POSTGRES_DB_PASSWORD,
         sslmode="require",
     )

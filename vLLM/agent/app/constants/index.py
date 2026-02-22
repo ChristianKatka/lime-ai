@@ -1,0 +1,7 @@
+
+import os
+
+POSTGRES_DB_URL = os.environ["POSTGRES_DB_URL"]
+POSTGRES_DB_USERNAME = os.environ["DB_USERNAME"]
+POSTGRES_DB_PASSWORD = os.environ["DB_PASSWORD"]
+SQS_QUEUE_URL = os.environ.get("SQS_QUEUE_URL")

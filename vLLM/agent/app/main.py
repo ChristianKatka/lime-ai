@@ -1,5 +1,4 @@
 
-from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 from app.utils.vllm_client import VLLMClient
 from app.guardrails.output_validator import validate_risk_assessment
@@ -9,9 +8,8 @@ import json
 import re
 import uuid
 from datetime import datetime, timezone
-
-app = FastAPI(title="Lime AI Agent")
-
+from app.constants.index import SQS_QUEUE_URL
+from app.instances.index import get_sqs_client
 
 system_prompt = """You are Lime AI, an enterprise transaction risk triage assistant.
 
@@ -45,41 +43,52 @@ If you cannot comply with JSON-only output, output this exact JSON:
 vllm_client = VLLMClient(
     model_name="meta-llama/Llama-3.1-8B-Instruct",
     system_prompt=system_prompt,
-    temperature=0.0
+    temperature=0.0,
 )
 
-# Health check endpoint
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+sqs_client = get_sqs_client()
+
+def process_transaction(transaction: dict) -> dict:
+    # If your input validator expects a string, just pass JSON string
+    msg = json.dumps(transaction)
+    validate_input_message(msg)
+
+    raw_response = vllm_client.chat(msg)
+    validated = validate_risk_assessment(raw_response)
+
+    validated["id"] = str(uuid.uuid4())
+    validated["time_stamp"] = datetime.now(timezone.utc).isoformat()
+
+    put_risk_assessment_document_to_db(validated)
+    return validated
+
+def main():
+    while True:
+        resp = sqs_client.receive_message(
+            QueueUrl=SQS_QUEUE_URL,
+            MaxNumberOfMessages=1,
+            WaitTimeSeconds=20,     # long poll | these values matches sqs config
+            VisibilityTimeout=120,  # give yourself time to process | these values matches sqs config
+        )
+
+        msgs = resp.get("Messages", [])
+        if not msgs:
+            continue
+
+        m = msgs[0]
+        receipt = m["ReceiptHandle"]
+
+        try:
+            transaction = json.loads(m["Body"])
+            process_transaction(transaction)
+            sqs_client.delete_message(QueueUrl=SQS_QUEUE_URL, ReceiptHandle=receipt)
+        except Exception as e:
+            # IMPORTANT: don't delete message -> it will retry after visibility timeout
+            print(f"ERROR processing message: {e}")
 
 
-
-class ChatRequest(BaseModel):
-    message: str
-
-# Main chat endpoint - sends user message to vLLM and returns risk assessment
-@app.post("/chat")
-def chat(request: ChatRequest):
-    try:
-        # Apply input validation guardrail
-        validate_input_message(request.message)
-        
-        raw_response = vllm_client.chat(request.message)
-        
-        # Apply output validation guardrail (raw_response is already a JSON string)
-        validated = validate_risk_assessment(raw_response)
-        
-        # Add ID + timestamp
-        validated["id"] = str(uuid.uuid4())
-        validated["time_stamp"] = datetime.now(timezone.utc).isoformat()
-        
-        # Log event to database
-        put_risk_assessment_document_to_db(validated)
-        
-        return validated
-
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Only run main() if this file is executed directly.
+# So this prevents infinite SQS loop from starting if the file (main.py) is imported as a module.
+# just a safety pattern
+if __name__ == "__main__":
+    main()

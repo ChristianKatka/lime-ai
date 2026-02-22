@@ -6,14 +6,7 @@ Services:
 - vLLM: http://localhost:8000
 - Agent API: http://localhost:3000
 
-## Test
 
-```bash
-docker compose up -d vllm
-curl http://localhost:8000/v1/models
-```
-
-Start Agent
 ```bash
 
 # check vLLM is up and show logs

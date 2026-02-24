@@ -1,5 +1,6 @@
 services:
   backend-api:
+    image: christian-lime-ai/backend
     build: .
     ports:
       - "8001:8001"

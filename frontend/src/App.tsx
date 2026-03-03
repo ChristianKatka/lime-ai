@@ -1,9 +1,10 @@
 import "./App.css";
+import { TransactionRiskMonitor } from "./components/transaction-risk-monitor/TransactionRiskMonitor";
 
 function App() {
   return (
     <>
-      <h1 className="text-3xl font-bold underline">Hello world!</h1>
+      <TransactionRiskMonitor></TransactionRiskMonitor>
     </>
   );
 }

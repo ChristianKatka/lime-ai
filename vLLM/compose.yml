@@ -30,6 +30,11 @@ services:
     depends_on:
       - vllm
     restart: unless-stopped
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: eu-north-1
+        awslogs-group: /ec2/christian-ec2-instance-lime-ai-agent
 
 volumes:
   hf-cache:

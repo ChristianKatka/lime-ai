@@ -1,1 +1,1 @@
-export const API_BASE_URL = "http://13.53.199.82:8001";
+export const API_BASE_URL = "http://16.171.36.215:8001";

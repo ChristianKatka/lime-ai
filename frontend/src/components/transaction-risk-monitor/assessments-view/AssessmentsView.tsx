@@ -5,9 +5,15 @@ import { AssessmentDetails } from "./assessment-details/AssessmentDetails";
 
 interface AssessmentsViewProps {
   assessments: RiskAssessment[];
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export const AssessmentsView = ({ assessments }: AssessmentsViewProps) => {
+export const AssessmentsView = ({
+  assessments,
+  isLoading,
+  onRefresh,
+}: AssessmentsViewProps) => {
   const [selectedAssessment, setSelectedAssessment] =
     useState<RiskAssessment | null>(null);
 
@@ -16,6 +22,8 @@ export const AssessmentsView = ({ assessments }: AssessmentsViewProps) => {
       <AssessmentTable
         assessments={assessments}
         onSelectAssessment={setSelectedAssessment}
+        isLoading={isLoading}
+        onRefresh={onRefresh}
       />
 
       {selectedAssessment && (

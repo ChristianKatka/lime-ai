@@ -4,7 +4,7 @@ import { FormInput } from "./form-input/FormInput";
 import { JsonInput } from "./json-input/JsonInput";
 
 interface SubmitViewProps {
-  onAnalyze: () => void;
+  onAnalyze: (transactionData?: unknown) => void;
   isAnalyzing: boolean;
 }
 
@@ -32,12 +32,25 @@ export const SubmitView = ({ onAnalyze, isAnalyzing }: SubmitViewProps) => {
 
   const handleJsonSubmit = () => {
     try {
-      JSON.parse(jsonInput);
-      onAnalyze();
+      const parsedData = JSON.parse(jsonInput);
+      onAnalyze(parsedData);
     } catch (e) {
       console.log(e);
       alert("Invalid JSON format. Please check your input.");
     }
+  };
+
+  const handleFormSubmit = () => {
+    const transactionData = {
+      transaction_id: formData.transactionId,
+      customer_country: formData.country,
+      amount_eur: parseFloat(formData.amount),
+      currency: formData.currency,
+      destination_country: formData.destination,
+      beneficiary: formData.beneficiary,
+      description: formData.purpose,
+    };
+    onAnalyze(transactionData);
   };
 
   return (
@@ -74,7 +87,7 @@ export const SubmitView = ({ onAnalyze, isAnalyzing }: SubmitViewProps) => {
         <FormInput
           formData={formData}
           onInputChange={handleInputChange}
-          onAnalyze={onAnalyze}
+          onAnalyze={handleFormSubmit}
           isAnalyzing={isAnalyzing}
         />
       ) : (

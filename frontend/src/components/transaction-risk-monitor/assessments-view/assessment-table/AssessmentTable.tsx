@@ -3,6 +3,8 @@ import type { RiskAssessment } from "../../types";
 interface AssessmentTableProps {
   assessments: RiskAssessment[];
   onSelectAssessment: (assessment: RiskAssessment) => void;
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
 const getRiskBadgeStyles = (level: string) => {
@@ -47,80 +49,102 @@ const formatTimestamp = (timestamp: string) => {
 export const AssessmentTable = ({
   assessments,
   onSelectAssessment,
+  isLoading,
+  onRefresh,
 }: AssessmentTableProps) => {
   return (
     <div className="bg-slate-800 border-2 border-blue-500/30 rounded-xl overflow-hidden shadow-lg">
-      <div className="p-6 border-b border-slate-700">
+      <div className="p-6 border-b border-slate-700 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Risk Assessments</h2>
+        <button
+          onClick={onRefresh}
+          disabled={isLoading}
+          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-600 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed"
+        >
+          {isLoading ? "Loading..." : "Refresh"}
+        </button>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-slate-900">
-            <tr>
-              <th className="px-6 py-4 text-left text-slate-200 font-semibold">
-                Timestamp
-              </th>
-              <th className="px-6 py-4 text-left text-slate-200 font-semibold">
-                Risk Level
-              </th>
-              <th className="px-6 py-4 text-left text-slate-200 font-semibold">
-                Risk Score
-              </th>
-              <th className="px-6 py-4 text-left text-slate-200 font-semibold">
-                Summary
-              </th>
-              <th className="px-6 py-4 text-left text-slate-200 font-semibold">
-                Confidence
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {assessments.map((assessment) => (
-              <tr
-                key={assessment.id}
-                onClick={() => onSelectAssessment(assessment)}
-                className="border-t border-slate-700 hover:bg-slate-700/50 cursor-pointer transition-colors"
-              >
-                <td className="px-6 py-4 text-slate-300 whitespace-nowrap">
-                  {formatTimestamp(assessment.time_stamp)}
-                </td>
-                <td className="px-6 py-4">
-                  {(() => {
-                    const styles = getRiskBadgeStyles(assessment.risk_level);
-                    return (
-                      <span
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border ${styles.container}`}
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full ${styles.dot}`}
-                        ></span>
-                        <span
-                          className={`font-semibold text-sm uppercase tracking-wide ${styles.text}`}
-                        >
-                          {assessment.risk_level}
-                        </span>
-                      </span>
-                    );
-                  })()}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-white font-bold text-lg">
-                    {assessment.risk_score}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-slate-300 max-w-md truncate">
-                  {assessment.summary}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-slate-300 font-semibold">
-                    {assessment.confidence}
-                  </span>
-                </td>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+            <span className="ml-3 text-slate-300 font-semibold">
+              Loading assessments...
+            </span>
+          </div>
+        ) : assessments.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-slate-400 text-lg">No risk assessments found.</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-slate-900">
+              <tr>
+                <th className="px-6 py-4 text-left text-slate-200 font-semibold">
+                  Timestamp
+                </th>
+                <th className="px-6 py-4 text-left text-slate-200 font-semibold">
+                  Risk Level
+                </th>
+                <th className="px-6 py-4 text-left text-slate-200 font-semibold">
+                  Risk Score
+                </th>
+                <th className="px-6 py-4 text-left text-slate-200 font-semibold">
+                  Summary
+                </th>
+                <th className="px-6 py-4 text-left text-slate-200 font-semibold">
+                  Confidence
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {assessments.map((assessment) => (
+                <tr
+                  key={assessment.id}
+                  onClick={() => onSelectAssessment(assessment)}
+                  className="border-t border-slate-700 hover:bg-slate-700/50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-4 text-slate-300 whitespace-nowrap">
+                    {formatTimestamp(assessment.time_stamp)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {(() => {
+                      const styles = getRiskBadgeStyles(assessment.risk_level);
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border ${styles.container}`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${styles.dot}`}
+                          ></span>
+                          <span
+                            className={`font-semibold text-sm uppercase tracking-wide ${styles.text}`}
+                          >
+                            {assessment.risk_level}
+                          </span>
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-white font-bold text-lg">
+                      {assessment.risk_score}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-300 max-w-md truncate">
+                    {assessment.summary}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-slate-300 font-semibold">
+                      {assessment.confidence}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

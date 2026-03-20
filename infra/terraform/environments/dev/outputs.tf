@@ -1,1 +1,9 @@
 # useful outputs
+
+output "rds_endpoint" {
+  value = module.rds.db_endpoint
+}
+
+output "sqs_queue_url" {
+  value = module.sqs.queue_url
+}

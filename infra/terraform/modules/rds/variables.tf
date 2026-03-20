@@ -18,3 +18,7 @@ variable "db_password" {
   type      = string
   sensitive = true
 }
+
+variable "ec2_security_group_id" {
+  type = string
+}

@@ -12,6 +12,10 @@ resource "aws_security_group" "this" {
   description = "RDS security group"
   vpc_id      = var.vpc_id
 
+  # TODO: Add ingress rules for port 5432 after EC2 and ECS modules are created
+  # - Allow from EC2 agent
+  # - Allow from ECS backend
+
   tags = {
     Name = "${var.project_name}-${var.environment}-rds-sg"
   }

@@ -23,6 +23,20 @@ module "ec2_agent" {
   sqs_queue_arn    = module.sqs.queue_arn
 }
 
+module "ecs_backend" {
+  source = "../../modules/ecs-backend"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  sqs_queue_arn     = module.sqs.queue_arn
+  sqs_queue_url     = module.sqs.queue_url
+  db_username       = "christian"
+  db_password       = var.db_password
+  postgres_db_url   = module.rds.db_hostname
+}
+
 module "rds" {
   source = "../../modules/rds"
 
@@ -32,5 +46,8 @@ module "rds" {
   private_subnet_ids    = module.vpc.private_subnet_ids
   db_password           = var.db_password
   ec2_security_group_id = module.ec2_agent.security_group_id
+  ecs_security_group_id = module.ecs_backend.security_group_id
 }
+
+
 

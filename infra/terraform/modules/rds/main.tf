@@ -20,7 +20,13 @@ resource "aws_security_group" "this" {
     security_groups = [var.ec2_security_group_id]
   }
 
-  # TODO: Add ingress rule for ECS backend after ECS module is created
+  ingress {
+    description     = "PostgreSQL from ECS backend"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [var.ecs_security_group_id]
+  }
 
   tags = {
     Name = "${var.project_name}-${var.environment}-rds-sg"

@@ -3,21 +3,25 @@
 ## Docker Compose
 
 Start:
+
 ```bash
 docker compose up -d
 ```
 
 Rebuild after code changes:
+
 ```bash
 docker compose up -d --build
 ```
 
 Stop:
+
 ```bash
 docker compose down
 ```
 
 Logs:
+
 ```bash
 docker compose logs -f
 ```
@@ -26,9 +30,10 @@ docker compose logs -f
 
 ```bash
 curl http://localhost:8001/health | jq
+curl http://13.51.157.221:8001/health | jq
 
 curl http://localhost:8001/risk | jq
- 
+
 curl -X POST http://localhost:8001/transactions -H "Content-Type: application/json" -d '{
     "transaction_id": "TX-1002",
     "timestamp": "2026-02-17T10:02:11Z",

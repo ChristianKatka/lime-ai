@@ -1,6 +1,20 @@
+# First run terraform init plan apply
+
+GITHUB ACTIONS
+
+Goto github
+Go to your repo on GitHub: github.com/ChristianKatka/lime-ai
+Click "Settings" tab (top right)
+Left sidebar → "Secrets and variables" → click "Actions"
+Click "New repository secret" button
+Name: AWS_ROLE_ARN
+Secret: paste the ARN from terraform output github_actions_role_arn (arn:aws:iam::802026442401:role/christian-lime-ai-dev-github-actions-role)
+Click "Add secret"
+That's it. The workflow reads it with ${{ secrets.AWS_ROLE_ARN }}.
+
 ```bash
 
-# First run terraform init plan apply
+
 
 # Crab the outputs:
 rds_endpoint = "christian-lime-ai-dev-postgresdb.cvkj09hn6us5.eu-north-1.rds.amazonaws.com"

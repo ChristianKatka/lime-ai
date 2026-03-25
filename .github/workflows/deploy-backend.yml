@@ -1,0 +1,43 @@
+# Builds backend Docker image, pushes to ECR, and deploys to ECS
+# Triggered on push to backend/ folder on master branch
+name: Deploy Backend
+
+on:
+  push:
+    branches: [master]
+    paths: [backend/**]
+
+permissions:
+  id-token: write # needed for OIDC
+  contents: read
+
+env:
+  AWS_REGION: eu-north-1
+  ECR_REPOSITORY: christian-lime-ai-dev/backend
+  ECS_CLUSTER: christian-lime-ai-dev-cluster
+  ECS_SERVICE: christian-lime-ai-dev-backend-service
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr-login
+
+      - name: Build, tag, and push image to ECR
+        working-directory: backend
+        run: |
+          docker compose build
+          docker tag ${{ env.ECR_REPOSITORY }}:latest ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.ECS_SERVICE }} --force-new-deployment

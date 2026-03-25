@@ -34,7 +34,7 @@ services:
       driver: awslogs
       options:
         awslogs-region: eu-north-1
-        awslogs-group: /ec2/christian-ec2-instance-lime-ai-agent
+        awslogs-group: /ec2/christian-lime-ai-dev-agent
 
 volumes:
   hf-cache:

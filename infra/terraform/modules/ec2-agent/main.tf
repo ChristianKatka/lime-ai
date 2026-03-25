@@ -23,14 +23,29 @@ resource "aws_iam_role_policy" "ec2_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "sqs:*",
-      ]
-      Resource = var.sqs_queue_arn
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:*",
+        ]
+        Resource = var.sqs_queue_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:*",
+        ]
+        Resource = "*"
+      }
+    ]
   })
+}
+
+# CloudWatch log group for the vLLM agent running on EC2
+resource "aws_cloudwatch_log_group" "agent" {
+  name              = "/ec2/${var.project_name}-${var.environment}-agent"
+  retention_in_days = 7
 }
 
 # wrapper that lets you attach an IAM role to an EC2 instance.
@@ -73,7 +88,7 @@ resource "aws_instance" "this" {
   iam_instance_profile   = aws_iam_instance_profile.this.name
 
   root_block_device {
-    volume_size = 50
+    volume_size = 100
     volume_type = "gp3"
   }
 

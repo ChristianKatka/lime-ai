@@ -13,7 +13,7 @@ resource "aws_security_group" "this" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "PostgreSQL from EC2 agent"
+    description     = "Allow EC2 agent to connect to DB"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
@@ -21,7 +21,7 @@ resource "aws_security_group" "this" {
   }
 
   ingress {
-    description     = "PostgreSQL from ECS backend"
+    description     = "Allow ECS backend to connect to DB"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
@@ -30,6 +30,15 @@ resource "aws_security_group" "this" {
 
   tags = {
     Name = "${var.project_name}-${var.environment}-rds-sg"
+  }
+
+  # Needed for RDS to respond back to ECS/EC2 connections
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 

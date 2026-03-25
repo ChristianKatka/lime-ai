@@ -2,6 +2,9 @@
 
 GITHUB ACTIONS
 
+github uses OIDC (OpenID Connect)
+and we created iam identity provider and via that github action can assume role that can acces ecs to force new deployment and push to ecr
+
 Goto github
 Go to your repo on GitHub: github.com/ChristianKatka/lime-ai
 Click "Settings" tab (top right)

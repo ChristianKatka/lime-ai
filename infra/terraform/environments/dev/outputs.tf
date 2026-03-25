@@ -1,7 +1,7 @@
 # useful outputs
 
 output "rds_endpoint" {
-  value = module.rds.db_endpoint
+  value = module.rds.db_hostname
 }
 
 output "sqs_queue_url" {

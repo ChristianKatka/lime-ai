@@ -1,0 +1,126 @@
+```bash
+
+# First run terraform init plan apply
+
+# Crab the outputs:
+rds_endpoint = "christian-lime-ai-dev-postgresdb.cvkj09hn6us5.eu-north-1.rds.amazonaws.com"
+sqs_queue_url = "https://sqs.eu-north-1.amazonaws.com/802026442401/christian-lime-ai-dev-transactions-sqs"
+
+# open ~/.ssh/config
+
+Host lime-llm-ec2
+  HostName 13.62.34.37 # PÄIVITÄ IP OSOTE from aws console elastic IPs
+  User ec2-user
+  IdentityFile ~/Documents/My/myProjects/2026/ec2-vllm/christian-ec2-key-pair.pem
+  IdentitiesOnly yes
+
+# Then run to connect
+ssh lime-ai-dev-llm-ec2
+
+# Install psql
+sudo dnf install -y postgresql16
+
+# Connect
+psql -h christian-lime-ai-dev-postgresdb.cvkj09hn6us5.eu-north-1.rds.amazonaws.com -U christian -d postgres
+
+CREATE TABLE risk_assessments (
+    id UUID PRIMARY KEY,
+    time_stamp TIMESTAMPTZ NOT NULL,
+    summary TEXT,
+    risk_level TEXT,
+    risk_score INTEGER,
+    risk_categories TEXT[],
+    red_flags TEXT[],
+    missing_information TEXT[],
+    recommended_actions TEXT[],
+    confidence TEXT
+);
+
+exit
+
+
+mkdir projects
+cd projects
+git clone https://github.com/ChristianKatka/lime-ai.git
+cd lime-ai
+cd vLLM
+
+# CREATE ENV FILE INSIDE vLLM
+
+cat << 'EOF' > .env
+
+<Copy-from-notes>
+
+EOF
+
+
+# THEN DOCKER COMPOSE NEED TO BE INSTALLED MANUALLY
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+
+sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
+    -o /usr/local/lib/docker/cli-plugins/docker-compose
+
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+docker compose version
+
+# Update buildx that docker compose requires, and grab latest version
+BUILDX_VERSION=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
+sudo curl -SL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" -o /usr/local/lib/docker/cli-plugins/docker-buildx
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+docker buildx version
+
+
+# THEN START THE AGENT and vLLM
+docker compose up -d
+
+# wait vLLM to start, -> wait for this log -> Application startup complete.
+docker compose logs -f --tail=50 vllm
+# then check agent is running
+docker compose logs -f agent
+
+
+# FROM YOUR OWN LAPTOP SO DONT BE INSIDE EC2.
+# DEPLOY BACKEND ECS
+cd ..
+cd backend
+
+# CREATE .env
+cat << 'EOF' > .env
+
+<Copy-from-notes>
+
+EOF
+
+# REMEMBER AWS CREDENTIALS IN TERMINAL
+# check push commands from ecr view push commands and
+# replace step 2 (the docker build) with
+docker compose build
+# After pushing the image to ecr
+# force new deployment to ecs so it pulls latest image from ecr
+aws ecs update-service --cluster christian-lime-ai-dev-cluster --service christian-lime-ai-dev-backend-service --force-new-deployment --region eu-north-1
+# Force youll see two tasks running for a sec, just wait
+
+
+# Then go to ecs -> service -> task and copy public ip address
+13.60.27.218
+
+curl http://13.60.27.218:8001/health
+
+curl -X POST http://13.60.27.218:8001/transactions -H "Content-Type: application/json" -d '{
+    "transaction_id": "TX-1002",
+    "timestamp": "2026-02-17T10:02:11Z",
+    "customer_id": "CUST-11209",
+    "customer_country": "Finland",
+    "amount_eur": 480,
+    "currency": "EUR",
+    "destination_country": "Finland",
+    "destination_bank_type": "Retail",
+    "payment_method": "Card",
+    "description": "Electronics purchase.",
+    "is_new_beneficiary": false,
+    "customer_risk_profile": "Low"
+  }'
+
+curl http://13.60.27.218:8001/risk
+```

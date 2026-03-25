@@ -49,5 +49,14 @@ module "rds" {
   ecs_security_group_id = module.ecs_backend.security_group_id
 }
 
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  project_name       = var.project_name
+  environment        = var.environment
+  ecr_repository_arn = module.ecs_backend.ecr_repository_arn
+  ecs_service_arn    = module.ecs_backend.ecs_service_arn
+}
+
 
 

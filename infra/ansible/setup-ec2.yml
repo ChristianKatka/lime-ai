@@ -1,0 +1,100 @@
+# Sets up the EC2 instance for running vLLM agent
+# Run: ansible-playbook -i inventory.ini setup-ec2.yml
+---
+- name: Setup EC2 agent
+  hosts: ec2_agent
+  become: true # means "run as sudo" by default
+  vars_prompt:
+    - name: db_password
+      prompt: "DB password"
+      private: true
+    - name: hugging_face_token
+      prompt: "HuggingFace token"
+      private: true
+    - name: sqs_queue_url
+      prompt: "SQS queue URL (from terraform output)"
+      private: false
+    - name: postgres_db_url
+      prompt: "RDS hostname (from terraform output)"
+      private: false
+
+  tasks:
+    # Install psql
+    - name: Install PostgreSQL client
+      dnf:
+        name: postgresql16
+        state: present
+
+    # Create DB table if not exists
+    - name: Create risk_assessments table
+      become_user: ec2-user
+      shell: |
+        PGPASSWORD={{ db_password }} psql -h {{ postgres_db_url }} -U christian -d postgres -c "
+        CREATE TABLE IF NOT EXISTS risk_assessments (
+            id UUID PRIMARY KEY,
+            time_stamp TIMESTAMPTZ NOT NULL,
+            summary TEXT,
+            risk_level TEXT,
+            risk_score INTEGER,
+            risk_categories TEXT[],
+            red_flags TEXT[],
+            missing_information TEXT[],
+            recommended_actions TEXT[],
+            confidence TEXT
+        );"
+
+    # Install docker compose plugin
+    - name: Create docker cli-plugins directory
+      file:
+        path: /usr/local/lib/docker/cli-plugins
+        state: directory
+
+    - name: Install docker compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{ ansible_architecture }}"
+        dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: "0755" # same as chmod
+
+    - name: Get latest buildx version
+      shell: curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d '"' -f 4
+      register: buildx_version
+
+    - name: Install docker buildx
+      get_url:
+        url: "https://github.com/docker/buildx/releases/download/{{ buildx_version.stdout }}/buildx-{{ buildx_version.stdout }}.linux-amd64"
+        dest: /usr/local/lib/docker/cli-plugins/docker-buildx
+        mode: "0755"
+
+    # Clone repo and setup
+    - name: Create projects directory
+      become_user: ec2-user
+      file:
+        path: /home/ec2-user/projects
+        state: directory # If it doesn't exist, Ansible creates
+
+    - name: Clone repo
+      become_user: ec2-user
+      git:
+        repo: https://github.com/ChristianKatka/lime-ai.git
+        dest: /home/ec2-user/projects/lime-ai
+        version: master
+        update: yes
+
+    # Create .env file for vLLM agent
+    - name: Create vLLM .env file
+      become_user: ec2-user
+      copy:
+        dest: /home/ec2-user/projects/lime-ai/vLLM/.env
+        content: |
+          HUGGING_FACE_HUB_TOKEN={{ hugging_face_token }}
+          DB_USERNAME=christian
+          DB_PASSWORD={{ db_password }}
+          SQS_QUEUE_URL={{ sqs_queue_url }}
+          POSTGRES_DB_URL={{ postgres_db_url }}
+
+    # Start vLLM agent
+    - name: Start docker compose
+      become_user: ec2-user
+      shell: docker compose up -d
+      args:
+        chdir: /home/ec2-user/projects/lime-ai/vLLM

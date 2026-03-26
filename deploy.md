@@ -120,24 +120,28 @@ aws ecs update-service --cluster christian-lime-ai-dev-cluster --service christi
 
 
 # Then go to ecs -> service -> task and copy public ip address
-13.60.27.218
+13.61.35.70
 
-curl http://13.60.27.218:8001/health
+curl http://13.61.35.70:8001/health
 
-curl -X POST http://13.60.27.218:8001/transactions -H "Content-Type: application/json" -d '{
-    "transaction_id": "TX-1002",
-    "timestamp": "2026-02-17T10:02:11Z",
-    "customer_id": "CUST-11209",
-    "customer_country": "Finland",
-    "amount_eur": 480,
+curl -X POST http://13.61.35.70:8001/transactions -H "Content-Type: application/json" -d '  {
+    "transaction_id": "TX-1003",
+    "timestamp": "2026-02-17T11:45:09Z",
+    "customer_id": "CUST-99832",
+    "customer_country": "France",
+    "amount_eur": 15000,
     "currency": "EUR",
-    "destination_country": "Finland",
-    "destination_bank_type": "Retail",
-    "payment_method": "Card",
-    "description": "Electronics purchase.",
-    "is_new_beneficiary": false,
-    "customer_risk_profile": "Low"
+    "destination_country": "United Arab Emirates",
+    "destination_bank_type": "Commercial",
+    "payment_method": "Wire Transfer",
+    "description": "Consulting services payment.",
+    "is_new_beneficiary": true,
+    "customer_risk_profile": "High"
   }'
 
-curl http://13.60.27.218:8001/risk
+curl http://13.61.35.70:8001/risk
+
+
+# NEXT TIME CONTINUE TO AUTOMATE vLLM Agent deployment with github actions
+
 ```

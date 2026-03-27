@@ -18,4 +18,5 @@ phases:
   post_build:
     commands:
       - echo Pushing to ECR...
+      - docker tag christian-lime-ai-dev/backend:latest $ECR_REPO_URI:latest
       - docker push $ECR_REPO_URI:latest

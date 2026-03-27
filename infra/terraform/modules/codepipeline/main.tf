@@ -125,6 +125,39 @@ resource "aws_codebuild_project" "backend" {
   }
 }
 
+# CodeBuild Project - deploys to ECS (force new deployment)
+resource "aws_codebuild_project" "deploy" {
+  name         = "${var.project_name}-${var.environment}-backend-deploy"
+  service_role = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    type         = "LINUX_CONTAINER"
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = <<-EOF
+      version: 0.2
+      phases:
+        build:
+          commands:
+            - echo Deploying to ECS...
+            - aws ecs update-service --cluster ${var.project_name}-${var.environment}-cluster --service ${var.project_name}-${var.environment}-backend-service --force-new-deployment --region eu-north-1
+            - echo Deploy triggered successfully
+    EOF
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-backend-deploy"
+  }
+}
+
 # CodePipeline IAM Role
 resource "aws_iam_role" "codepipeline" {
   name = "${var.project_name}-${var.environment}-codepipeline-role"
@@ -165,7 +198,7 @@ resource "aws_iam_role_policy" "codepipeline" {
       {
         Effect   = "Allow"
         Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds"]
-        Resource = aws_codebuild_project.backend.arn
+        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn]
       },
       {
         Effect   = "Allow"
@@ -182,8 +215,8 @@ resource "aws_iam_role_policy" "codepipeline" {
 }
 
 # The Pipeline - manual trigger only (no auto-deploy on push)
-resource "aws_codepipeline" "backend" {
-  name     = "${var.project_name}-${var.environment}-backend-pipeline"
+resource "aws_codepipeline" "pipeline" {
+  name     = "${var.project_name}-${var.environment}-pipeline"
   role_arn = aws_iam_role.codepipeline.arn
 
   pipeline_type = "V2"
@@ -194,10 +227,10 @@ resource "aws_codepipeline" "backend" {
   }
 
   stage {
-    name = "Source"
+    name = "Pull-GitHub-Repo"
 
     action {
-      name             = "Source"
+      name             = "Pull-lime-ai-master"
       category         = "Source"
       owner            = "AWS"
       provider         = "CodeStarSourceConnection"
@@ -214,10 +247,10 @@ resource "aws_codepipeline" "backend" {
   }
 
   stage {
-    name = "Build"
+    name = "Build-Backend-Image-Push-ECR"
 
     action {
-      name            = "Build"
+      name            = "Build-Backend-Docker-Image"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
@@ -226,6 +259,23 @@ resource "aws_codepipeline" "backend" {
 
       configuration = {
         ProjectName = aws_codebuild_project.backend.name
+      }
+    }
+  }
+
+  stage {
+    name = "Deploy-Backend-to-ECS"
+
+    action {
+      name            = "Force-New-ECS-Deployment"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      version         = "1"
+      input_artifacts = ["source_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.deploy.name
       }
     }
   }

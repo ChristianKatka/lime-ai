@@ -5,15 +5,17 @@ phases:
   pre_build:
     commands:
       - echo Logging in to ECR...
+      # Get temporary auth token from AWS and pipe it to docker login
+      # --username AWS is always "AWS" for ECR (not personal username)
+      # --password-stdin reads the password from the pipe instead of typing it
+      #  get a temporary password from AWS, then use it to log Docker into my ECR registry
       - aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin $ECR_REPO_URI
   build:
     commands:
       - echo Building Docker image...
       - cd backend
-      - docker build --platform linux/amd64 -t $ECR_REPO_URI:latest .
+      - docker compose build
   post_build:
     commands:
       - echo Pushing to ECR...
       - docker push $ECR_REPO_URI:latest
-      - echo Deploying to ECS...
-      - aws ecs update-service --cluster christian-lime-ai-dev-cluster --service christian-lime-ai-dev-backend-service --force-new-deployment --region eu-north-1

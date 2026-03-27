@@ -11,3 +11,11 @@ output "sqs_queue_url" {
 output "github_actions_role_arn" {
   value = module.github_oidc.role_arn
 }
+
+output "cloudfront_domain" {
+  value = module.frontend.cloudfront_domain
+}
+
+output "s3_bucket_name" {
+  value = module.frontend.s3_bucket_name
+}

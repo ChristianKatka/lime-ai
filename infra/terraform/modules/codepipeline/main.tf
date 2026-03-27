@@ -93,6 +93,21 @@ resource "aws_iam_role_policy" "codebuild" {
           "ssm:GetCommandInvocation",
         ]
         Resource = "*"
+      },
+      {
+        # Upload frontend build to S3
+        Effect = "Allow"
+        Action = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::${var.frontend_bucket_name}",
+          "arn:aws:s3:::${var.frontend_bucket_name}/*"
+        ]
+      },
+      {
+        # Invalidate CloudFront cache after frontend deploy
+        Effect   = "Allow"
+        Action   = ["cloudfront:CreateInvalidation"]
+        Resource = "*"
       }
     ]
   })
@@ -215,6 +230,65 @@ resource "aws_codebuild_project" "deploy_agent" {
   }
 }
 
+# CodeBuild Project - builds React frontend
+resource "aws_codebuild_project" "frontend_build" {
+  name         = "${var.project_name}-${var.environment}-frontend-build"
+  service_role = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    type         = "LINUX_CONTAINER"
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = "frontend/buildspec.yml"
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-frontend-build"
+  }
+}
+
+# CodeBuild Project - deploys frontend to S3 and invalidates CloudFront
+resource "aws_codebuild_project" "frontend_deploy" {
+  name         = "${var.project_name}-${var.environment}-frontend-deploy"
+  service_role = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    type         = "LINUX_CONTAINER"
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = <<-EOF
+      version: 0.2
+      phases:
+        build:
+          commands:
+            - echo Deploying frontend to S3...
+            - aws s3 sync frontend/dist/ s3://${var.frontend_bucket_name} --delete
+            - echo Invalidating CloudFront cache...
+            - aws cloudfront create-invalidation --distribution-id ${var.cloudfront_distribution_id} --paths "/*"
+    EOF
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-frontend-deploy"
+  }
+}
+
 # CodePipeline IAM Role
 resource "aws_iam_role" "codepipeline" {
   name = "${var.project_name}-${var.environment}-codepipeline-role"
@@ -255,7 +329,7 @@ resource "aws_iam_role_policy" "codepipeline" {
       {
         Effect   = "Allow"
         Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds"]
-        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn, aws_codebuild_project.deploy_agent.arn]
+        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn, aws_codebuild_project.deploy_agent.arn, aws_codebuild_project.frontend_build.arn, aws_codebuild_project.frontend_deploy.arn]
       },
       {
         Effect   = "Allow"
@@ -350,6 +424,40 @@ resource "aws_codepipeline" "pipeline" {
 
       configuration = {
         ProjectName = aws_codebuild_project.deploy_agent.name
+      }
+    }
+  }
+
+  stage {
+    name = "Build-Frontend"
+
+    action {
+      name            = "Build-React-App"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      version         = "1"
+      input_artifacts = ["source_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.frontend_build.name
+      }
+    }
+  }
+
+  stage {
+    name = "Deploy-Frontend-to-S3"
+
+    action {
+      name            = "Sync-S3-Invalidate-CloudFront"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      version         = "1"
+      input_artifacts = ["source_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.frontend_deploy.name
       }
     }
   }

@@ -61,12 +61,21 @@ module "github_oidc" {
 module "codepipeline" {
   source = "../../modules/codepipeline"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  ecr_repository_arn = module.ecs_backend.ecr_repository_arn
-  ecr_repository_url = module.ecs_backend.ecr_repository_url
-  ecs_service_arn    = module.ecs_backend.ecs_service_arn
-  ec2_instance_id    = module.ec2_agent.instance_id
+  project_name               = var.project_name
+  environment                = var.environment
+  ecr_repository_arn         = module.ecs_backend.ecr_repository_arn
+  ecr_repository_url         = module.ecs_backend.ecr_repository_url
+  ecs_service_arn            = module.ecs_backend.ecs_service_arn
+  ec2_instance_id            = module.ec2_agent.instance_id
+  frontend_bucket_name       = module.frontend.s3_bucket_name
+  cloudfront_distribution_id = module.frontend.cloudfront_distribution_id
+}
+
+module "frontend" {
+  source = "../../modules/frontend"
+
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 

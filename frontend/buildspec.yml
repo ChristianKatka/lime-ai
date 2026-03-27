@@ -1,0 +1,13 @@
+# CodeBuild build spec - builds React frontend
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+    commands:
+      - cd frontend
+      - npm ci
+  build:
+    commands:
+      - npm run build

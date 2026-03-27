@@ -21,3 +21,11 @@ variable "ecs_service_arn" {
 variable "ec2_instance_id" {
   type = string
 }
+
+variable "frontend_bucket_name" {
+  type = string
+}
+
+variable "cloudfront_distribution_id" {
+  type = string
+}

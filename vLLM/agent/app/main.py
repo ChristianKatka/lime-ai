@@ -64,12 +64,14 @@ def process_transaction(transaction: dict) -> dict:
     
     print("[PROCESS] Output validation starting...")
     validated = validate_risk_assessment(raw_response)
-    print(f"[PROCESS] ✓ Output validation passed - Risk Level: {validated.get('risk_level')}")
+    print(f"[PROCESS] ✓ Output validation passed")
+    print(f"[PROCESS] ✓ Risk Level Of Risk assesment: {validated.get('risk_level')}")
 
     validated["id"] = str(uuid.uuid4())
     validated["time_stamp"] = datetime.now(timezone.utc).isoformat()
 
     print("[PROCESS] Saving to database...")
+    print(json.dumps(validated, indent=4))
     put_risk_assessment_document_to_db(validated)
     print("[PROCESS] ✓ Successfully saved to database")
     

@@ -17,3 +17,7 @@ variable "ecr_repository_url" {
 variable "ecs_service_arn" {
   type = string
 }
+
+variable "ec2_instance_id" {
+  type = string
+}

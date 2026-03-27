@@ -37,6 +37,18 @@ resource "aws_iam_role_policy" "ec2_policy" {
           "logs:*",
         ]
         Resource = "*"
+      },
+      {
+        # SSM agent needs these to communicate with Systems Manager
+        Effect = "Allow"
+        Action = [
+          "ssm:UpdateInstanceInformation",
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ]
+        Resource = "*"
       }
     ]
   })

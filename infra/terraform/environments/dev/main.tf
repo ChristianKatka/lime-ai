@@ -66,6 +66,7 @@ module "codepipeline" {
   ecr_repository_arn = module.ecs_backend.ecr_repository_arn
   ecr_repository_url = module.ecs_backend.ecr_repository_url
   ecs_service_arn    = module.ecs_backend.ecs_service_arn
+  ec2_instance_id    = module.ec2_agent.instance_id
 }
 
 

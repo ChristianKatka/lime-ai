@@ -84,6 +84,15 @@ resource "aws_iam_role_policy" "codebuild" {
           "ecs:DescribeServices",
         ]
         Resource = var.ecs_service_arn
+      },
+      {
+        # SSM Run Command to build n deploy vLLM agent on EC2
+        Effect = "Allow"
+        Action = [
+          "ssm:SendCommand",
+          "ssm:GetCommandInvocation",
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -158,6 +167,54 @@ resource "aws_codebuild_project" "deploy" {
   }
 }
 
+# CodeBuild Project - builds and deploys vLLM agent on EC2 via SSM
+resource "aws_codebuild_project" "deploy_agent" {
+  name         = "${var.project_name}-${var.environment}-vLLM-agent-build-n-deploy"
+  service_role = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    type         = "LINUX_CONTAINER"
+
+    environment_variable {
+      name  = "EC2_INSTANCE_ID"
+      value = var.ec2_instance_id
+    }
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = <<-EOF
+      version: 0.2
+      phases:
+        build:
+          commands:
+            - echo Deploying vLLM agent to EC2...
+            - |
+              COMMAND_ID=$(aws ssm send-command \
+                --instance-ids $EC2_INSTANCE_ID \
+                --document-name "AWS-RunShellScript" \
+                --parameters 'commands=["cd /home/ec2-user/projects/lime-ai && git pull && cd vLLM && docker compose up -d --build agent && docker image prune -f"]' \
+                --region eu-north-1 \
+                --query "Command.CommandId" \
+                --output text)
+            - echo "SSM Command ID $COMMAND_ID"
+            - echo Waiting for command to complete...
+            - aws ssm wait command-executed --command-id $COMMAND_ID --instance-id $EC2_INSTANCE_ID --region eu-north-1 || true
+            - aws ssm get-command-invocation --command-id $COMMAND_ID --instance-id $EC2_INSTANCE_ID --region eu-north-1 --query "[Status,StandardOutputContent,StandardErrorContent]"
+    EOF
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-vLLM-agent-deploy"
+  }
+}
+
 # CodePipeline IAM Role
 resource "aws_iam_role" "codepipeline" {
   name = "${var.project_name}-${var.environment}-codepipeline-role"
@@ -198,7 +255,7 @@ resource "aws_iam_role_policy" "codepipeline" {
       {
         Effect   = "Allow"
         Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds"]
-        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn]
+        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn, aws_codebuild_project.deploy_agent.arn]
       },
       {
         Effect   = "Allow"
@@ -276,6 +333,23 @@ resource "aws_codepipeline" "pipeline" {
 
       configuration = {
         ProjectName = aws_codebuild_project.deploy.name
+      }
+    }
+  }
+
+  stage {
+    name = "Deploy-vLLM-Agent-to-EC2"
+
+    action {
+      name            = "SSM-Pull-Rebuild-Agent"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      version         = "1"
+      input_artifacts = ["source_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.deploy_agent.name
       }
     }
   }

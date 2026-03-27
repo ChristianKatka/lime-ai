@@ -58,5 +58,15 @@ module "github_oidc" {
   ecs_service_arn    = module.ecs_backend.ecs_service_arn
 }
 
+module "codepipeline" {
+  source = "../../modules/codepipeline"
+
+  project_name       = var.project_name
+  environment        = var.environment
+  ecr_repository_arn = module.ecs_backend.ecr_repository_arn
+  ecr_repository_url = module.ecs_backend.ecr_repository_url
+  ecs_service_arn    = module.ecs_backend.ecs_service_arn
+}
+
 
 

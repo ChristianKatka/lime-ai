@@ -1,0 +1,19 @@
+# CodeBuild build spec - builds backend Docker image and pushes to ECR
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to ECR...
+      - aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin $ECR_REPO_URI
+  build:
+    commands:
+      - echo Building Docker image...
+      - cd backend
+      - docker build --platform linux/amd64 -t $ECR_REPO_URI:latest .
+  post_build:
+    commands:
+      - echo Pushing to ECR...
+      - docker push $ECR_REPO_URI:latest
+      - echo Deploying to ECS...
+      - aws ecs update-service --cluster christian-lime-ai-dev-cluster --service christian-lime-ai-dev-backend-service --force-new-deployment --region eu-north-1

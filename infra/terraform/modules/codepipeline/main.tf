@@ -243,6 +243,16 @@ resource "aws_codebuild_project" "frontend_build" {
     compute_type = "BUILD_GENERAL1_SMALL"
     image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type         = "LINUX_CONTAINER"
+
+    environment_variable {
+      name  = "S3_BUCKET"
+      value = var.frontend_bucket_name
+    }
+
+    environment_variable {
+      name  = "CLOUDFRONT_DIST_ID"
+      value = var.cloudfront_distribution_id
+    }
   }
 
   source {
@@ -329,7 +339,7 @@ resource "aws_iam_role_policy" "codepipeline" {
       {
         Effect   = "Allow"
         Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds"]
-        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn, aws_codebuild_project.deploy_agent.arn, aws_codebuild_project.frontend_build.arn, aws_codebuild_project.frontend_deploy.arn]
+        Resource = [aws_codebuild_project.backend.arn, aws_codebuild_project.deploy.arn, aws_codebuild_project.deploy_agent.arn, aws_codebuild_project.frontend_build.arn]
       },
       {
         Effect   = "Allow"
@@ -429,10 +439,10 @@ resource "aws_codepipeline" "pipeline" {
   }
 
   stage {
-    name = "Build-Frontend"
+    name = "Build-n-Deploy-Frontend"
 
     action {
-      name            = "Build-React-App"
+      name            = "Build-React-n-Deploy"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
@@ -441,23 +451,6 @@ resource "aws_codepipeline" "pipeline" {
 
       configuration = {
         ProjectName = aws_codebuild_project.frontend_build.name
-      }
-    }
-  }
-
-  stage {
-    name = "Deploy-Frontend-to-S3"
-
-    action {
-      name            = "Sync-S3-Invalidate-CloudFront"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      version         = "1"
-      input_artifacts = ["source_output"]
-
-      configuration = {
-        ProjectName = aws_codebuild_project.frontend_deploy.name
       }
     }
   }

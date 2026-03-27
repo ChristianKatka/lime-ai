@@ -19,7 +19,7 @@ export const submitTransaction = async (
   transactionData: unknown,
 ): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/transaction`, {
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

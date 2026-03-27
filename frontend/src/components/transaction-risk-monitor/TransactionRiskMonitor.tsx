@@ -23,6 +23,9 @@ export const TransactionRiskMonitor = () => {
     setError(null);
     try {
       const data = await fetchRiskAssessments();
+      console.log("API RESPONSE::");
+      console.log(data);
+
       setAssessments(data);
     } catch (err) {
       setError("Failed to load risk assessments. Please try again.");

@@ -124,19 +124,19 @@ aws ecs update-service --cluster christian-lime-ai-dev-cluster --service christi
 
 curl http://16.171.175.244:8001/health
 
-curl -X POST http://16.171.175.244:8001/transactions -H "Content-Type: application/json" -d '  {
-    "transaction_id": "TX-1003",
-    "timestamp": "2026-02-17T11:45:09Z",
-    "customer_id": "CUST-99832",
-    "customer_country": "France",
-    "amount_eur": 15000,
+curl -X POST http://16.171.175.244:8001/transactions -H "Content-Type: application/json" -d '    {
+    "transaction_id": "TX-1004",
+    "timestamp": "2026-02-17T12:33:55Z",
+    "customer_id": "CUST-55478",
+    "customer_country": "Sweden",
+    "amount_eur": 72000,
     "currency": "EUR",
-    "destination_country": "United Arab Emirates",
-    "destination_bank_type": "Commercial",
+    "destination_country": "Russia",
+    "destination_bank_type": "Unknown",
     "payment_method": "Wire Transfer",
-    "description": "Consulting services payment.",
+    "description": "Equipment purchase.",
     "is_new_beneficiary": true,
-    "customer_risk_profile": "High"
+    "customer_risk_profile": "Medium"
   }'
 
 curl http://16.171.175.244:8001/risk

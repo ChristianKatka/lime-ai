@@ -1,0 +1,30 @@
+# Pulls latest code and rebuilds the vLLM agent on EC2
+# Triggered on push to vLLM/agent/ folder on master branch
+name: Deploy vLLM Agent
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: [vLLM/agent/**]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into EC2 and update agent
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key:
+            ${{ secrets.EC2_SSH_KEY }}
+
+            # Rebuild only the agent container, vLLM stays running
+            # Clean up old unused images to save disk space (100GB EC2)
+          script: |
+            cd /home/ec2-user/projects/lime-ai
+            git pull
+            cd vLLM
+            docker compose up -d --build agent
+            docker image prune -f

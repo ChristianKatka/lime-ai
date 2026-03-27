@@ -120,11 +120,11 @@ aws ecs update-service --cluster christian-lime-ai-dev-cluster --service christi
 
 
 # Then go to ecs -> service -> task and copy public ip address
-13.61.35.70
+16.171.175.244
 
-curl http://13.61.35.70:8001/health
+curl http://16.171.175.244:8001/health
 
-curl -X POST http://13.61.35.70:8001/transactions -H "Content-Type: application/json" -d '  {
+curl -X POST http://16.171.175.244:8001/transactions -H "Content-Type: application/json" -d '  {
     "transaction_id": "TX-1003",
     "timestamp": "2026-02-17T11:45:09Z",
     "customer_id": "CUST-99832",
@@ -139,7 +139,7 @@ curl -X POST http://13.61.35.70:8001/transactions -H "Content-Type: application/
     "customer_risk_profile": "High"
   }'
 
-curl http://13.61.35.70:8001/risk
+curl http://16.171.175.244:8001/risk
 
 
 # NEXT TIME CONTINUE TO AUTOMATE vLLM Agent deployment with github actions
